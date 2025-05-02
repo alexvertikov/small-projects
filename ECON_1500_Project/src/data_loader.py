@@ -132,11 +132,45 @@ def calculate_balance(df):
 def impact_calculator(df, rate):
     """"
     A function that intakes a tarriff rate and dataframe and uses a model
-    (either Penn Model or my own) to calculate the proposed effect on imports and exports
+    (either Penn Model or my own) to calculate the proposed effect on imports and exports.
+    This specific (simple) model is inspired by 
+
+    The function will intake a dataframe (similar to all_data) and tarriff rate (given from the slider)
+    and update the dataframe with the projected import/export volumes
+
+    For simplification, we assume that in 2024 all goods were subject to a 0% tarriff rate.
     """
 
+    #Making a copy of our dataframe
+    projected_df = df.copy()
+
     if (rate == 0):
-        #If the rate is 0, we assume nothing is changing (assume that there is currently 0% tarriff, 
-        #as as the case for USMCA compliant goods)
-        return df
-    return df
+        #If the rate is 0, nothing changes (assume that there is currently 0% tarriff, as was the case for USMCA compliant goods in 2024)
+        return projected_df
+    
+    #Converting the tarriff rate to a decimal
+    dec_rate = rate / 100
+
+
+    #VERY simple model
+    #Assume import elasticity of -0.7 and export elasticity of -1.0 (since reciprocal tarriffs would reduce exports)
+
+    #In economic literature, 0.7 is standard (cite a paper)
+    import_elasticity = -0.7
+
+    #For export elasticity, we have between 0.5 and 1.5
+    export_elasticity = 1.0
+    
+    #Simple calculations to apply the elasticity onto the imports (0.7 times the tarriff rate will be the percent decrease in imports)
+    projected_df["Canada Imports"] = df["Canada Imports"] * (1 + (import_elasticity * dec_rate))
+    projected_df["Mexico Imports"] = df["Mexico Imports"] * (1 + (import_elasticity * dec_rate))
+    
+    #Simple calculations to apply the elasticity onto the exports (1.0 times the tarriff rate will be the percent increase in exports)
+    projected_df["Canada Exports"] = df["Canada Exports"] * (1 + (export_elasticity * dec_rate))
+    projected_df["Mexico Exports"] = df["Mexico Exports"] * (1 + (export_elasticity * dec_rate))
+    
+    #Because we changed the import/export columns, we need to call calculate_balance again
+    #to recalculate the individual and total balances
+    projected_df = calculate_balance(projected_df)
+    
+    return projected_df

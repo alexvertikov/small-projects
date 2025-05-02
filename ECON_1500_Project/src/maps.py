@@ -73,13 +73,13 @@ def create_map(df):
     )
     
     fig.update_layout(
-        title="US States' Absolute Trade Balance with Canada and Mexico. Hover over each state for granular data (later potentially information on what is causing that). Also adjust the slider to see about projected tarriffs",
+        title="US States' Absolute Trade Balance with Canada and Mexico under selected tariff rates. Hover over each state for granular data.",
         geo=dict(
             showlakes=True,
             lakecolor='rgb(255, 255, 255)',
         ),
         coloraxis_colorbar=dict(
-            title='Trade Balance ($)',
+            title='Trade Balance (million $)',
             tickprefix='$',
             tickformat=',.0f'
         )
