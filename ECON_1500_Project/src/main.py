@@ -13,7 +13,10 @@ from maps import create_map
 st.set_page_config(layout="wide", page_title="North American Trade Visualization")
 
 #Creating Title
-st.title("ECON 1500 Final: An Interactive Visualization of North American Trade for U.S. States")
+st.title("An Interactive Visualization of 2024 North American Trade for U.S. States")
+
+#Header for a subtitle
+st.subheader("Created by Alex Vertikov as a Final Project for the Spring 2025 Iteration of ECON 1500 at Brown University, taught by Professor Fernando Duarte. Please see the README for more details on the motivation and implementation of this project.")
 
 #Loading and processing data
 @st.cache_data
@@ -33,8 +36,13 @@ def get_processed_data():
 #The final dataframe
 trade_data = get_processed_data()
 
+#Printing the final dataframe for error checking
+print(trade_data)
+
 #Creating and displaying the map
-fig = create_map(trade_data, "Total Balance")
+fig = create_map(trade_data)
+
+
 st.plotly_chart(fig, use_container_width=True)
 
 

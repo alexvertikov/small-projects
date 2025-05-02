@@ -21,64 +21,93 @@ def load_data():
     mexico_exports = pd.read_csv("/Users/alexvertikov/Desktop/Personal-Projects/ECON_1500_Project/data/Cured-State-Mexican-Exports - State-Mexican-Exports.csv", encoding='cp1252')
     mexico_imports = pd.read_csv("/Users/alexvertikov/Desktop/Personal-Projects/ECON_1500_Project/data/Cured-State-Mexican-Imports.csv", encoding='cp1252')
 
-   # Filter to get just the rows for individual states (not UNITED STATES or Unallocated)
-        # Filter for rows where Product is "0--All Merchandise" and exclude UNITED STATES and Unallocated
-    state_exports_canada = canada_exports[
-        (canada_exports['Product'] == '0--All Merchandise') & 
-        (canada_exports['State'] != 'UNITED STATES') &
-        (canada_exports['State'] != 'Unallocated')
-    ]
-    state_imports_canada = canada_imports[
-        (canada_imports['Product'] == '0--All Merchandise') & 
-        (canada_imports['State'] != 'UNITED STATES') &
-        (canada_imports['State'] != 'Unallocated')
-    ]
-        
-    state_exports_mexico = mexico_exports[
-        (mexico_exports['Product'] == '0--All Merchandise') & 
-        (mexico_exports['State'] != 'UNITED STATES') &
-        (mexico_exports['State'] != 'Unallocated')
-    ]
-        
-    state_imports_mexico = mexico_imports[
-        (mexico_imports['Product'] == '0--All Merchandise') & 
-        (mexico_imports['State'] != 'UNITED STATES') &
-        (mexico_imports['State'] != 'Unallocated')
+    #Filter to get just the rows for individual states (not UNITED STATES or Unallocated)
+    #Filter for rows where Product is "0--All Merchandise" and exclude UNITED STATES and Unallocated
+
+    #Remove the rows for US, Unallocated, Puerto Rico, DC, and USVI
+    canada_exports = canada_exports[
+        (canada_exports["State"] != "Puerto Rico") &
+        (canada_exports["State"] != "District of Columbia") &
+        (canada_exports["State"] != "Virgin Islands") &
+        (canada_exports["State"] != "UNITED STATES") &
+        (canada_exports["State"] != 'Unallocated')
     ]
 
-    # Create a base dataframe with state names
-    all_data = pd.DataFrame({'State': state_exports_canada['State']})
+    canada_imports = canada_imports[
+        (canada_imports["State"] != "Puerto Rico") &
+        (canada_imports["State"] != "District of Columbia") &
+        (canada_imports["State"] != "Virgin Islands") &
+        (canada_imports["State"] != "UNITED STATES") &
+        (canada_imports["State"] != "Unallocated")
+    ]
         
-    # Function to convert string values with $ to numbers
+    mexico_exports = mexico_exports[
+        (mexico_exports["State"] != "Puerto Rico") &
+        (mexico_exports["State"] != "District of Columbia") &
+        (mexico_exports["State"] != "Virgin Islands") &
+        (mexico_exports["State"] != "UNITED STATES") &
+        (mexico_exports["State"] != "Unallocated")
+    ]
+        
+    mexico_imports = mexico_imports[
+        (mexico_imports["State"] != "Puerto Rico") &
+        (mexico_imports["State"] != "District of Columbia") &
+        (mexico_imports["State"] != "Virgin Islands") &
+        (mexico_imports["State"] != "UNITED STATES") &
+        (mexico_imports["State"] != "Unallocated")
+    ]
+
+    
+    #Now, create a dataframe with just the state names (taken randmoly from canada_exports)
+    all_data = pd.DataFrame({"State": canada_exports["State"].copy()})
+    
+        
+    #Function that converts raw data values (strings with dollar signs) into numbers
     def convert_to_number(value):
+        """
+        If it is a string, we use regex to return a float without any commas or dollar signs
+        """
+        #if value is a string, we return a float ()
         if isinstance(value, str):
-                # Remove $ and commas
+                #Remove $ and commas using regex
             return float(re.sub(r'[,$]', '', value))
         return value
+    
+    
         
-    # Add trade data as numeric values
-    all_data['Canada Exports'] = state_exports_canada['2024'].apply(convert_to_number)
-    all_data['Canada Imports'] = state_imports_canada['2024'].apply(convert_to_number)
-    all_data['Mexico Exports'] = state_exports_mexico['2024'].apply(convert_to_number)
-    all_data['Mexico Imports'] = state_imports_mexico['2024'].apply(convert_to_number)
+    #Adding the data for exports/imports from Canada and Mexico as new columns in the dataframe
+    #NOTE: the values for the export/import quantities are strings that contain dollar signs, NOT numbers
+
+    #Use merge to safely add all the data and make sure the rows are aligned by state name 
+    #We will merge the two dataframes (including the "State" column since we merge on state)
+    #"How: left" signifies that we keep all rows from the left dataframe
+    all_data = all_data.merge(canada_exports[["State", "2024"]], how="left", on = "State")
+
+    #After merging, we need to rename the data column from canada_exports (since it's just called 2024)
+    all_data.rename(columns = {"2024":"Canada Exports"}, inplace=True)
+
+    #Continue the same process for other import/export dataframes
+    all_data = all_data.merge(canada_imports[["State", "2024"]], how="left", on = "State")
+    all_data.rename(columns = {"2024":"Canada Imports"}, inplace=True)
+
+    all_data = all_data.merge(mexico_exports[["State", "2024"]], how="left", on = "State")
+    all_data.rename(columns = {"2024":"Mexico Exports"}, inplace=True)
+
+    all_data = all_data.merge(mexico_imports[["State", "2024"]], how="left", on = "State")
+    all_data.rename(columns = {"2024":"Mexico Imports"}, inplace=True)
+
+
+
+    #Changing the import/export column datas into floats we can work with
+    #.apply() applies a function to a column (in this case the 2024 data)
+    all_data["Canada Exports"] = all_data["Canada Exports"].apply(convert_to_number)
+    all_data["Canada Imports"] = all_data["Canada Imports"].apply(convert_to_number)
+    all_data["Mexico Exports"] = all_data["Mexico Exports"].apply(convert_to_number)
+    all_data["Mexico Imports"] = all_data["Mexico Imports"].apply(convert_to_number)
+
         
     return all_data
 
-
-    """
-    #Now, create a dataframe with just the state name and Canada exports in 2024
-    all_data = canada_exports[["State", "2024"]].copy()
-
-    #Rename the column to be clear that we have 2024 Canada exports
-    all_data.rename(columns={"2024":"Canada Exports"}, inplace = True)
-
-    #Now add columns to the final dataframe with the rest of Mexico/Canada imports/exports
-    all_data["Canada Imports"] = canada_imports["2024"]
-    all_data["Mexico Exports"] = mexico_exports["2024"]
-    all_data["Mexico Imports"] = mexico_imports["2024"]
-
-    return all_data
-    """
 
 #A function that will calculate the balance of trade for each state with Mexico+Canada
 def calculate_balance(df):

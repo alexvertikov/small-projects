@@ -2,7 +2,7 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 
-def create_map(df, balance_column):
+def create_map(df):
     """"
     This is a function that will generate and synthesize the actual map we are using
     Specifically, we will be making use of the plotly objects.
@@ -10,7 +10,7 @@ def create_map(df, balance_column):
     This function intakes our all_data df
     """
 
-    # Add state codes for mapping
+    # Adding a state codes dictionary for mapping
     state_codes = {
         'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 
         'California': 'CA', 'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE',
@@ -27,16 +27,13 @@ def create_map(df, balance_column):
         'Wisconsin': 'WI', 'Wyoming': 'WY', 'District of Columbia': 'DC'
     }
     
-    # Add state codes to the dataframe
+    #Add state codes to the dataframe, map will change the "State" column of the original df to "state_code"
     df_map = df.copy()
-    df_map['state_code'] = df_map['State'].map(state_codes)
+    df_map["state_code"] = df_map["State"].map(state_codes)
 
-    # Convert to millions for easier display
-    df_map[f'{balance_column}_millions'] = df_map[balance_column] / 1000000
-    display_column = f'{balance_column}_millions'
     
     # Create diverging color scale (red for negative, green for positive)
-    max_abs_value = max(abs(df_map[balance_column].min()), abs(df_map[balance_column].max()))
+    max_abs_value = max(abs(df_map["Total Balance"].min()), abs(df_map["Total Balance"].max()))
 
     # Ensure there's a good range for the color scale
     if max_abs_value < 50:
@@ -47,7 +44,7 @@ def create_map(df, balance_column):
         df_map,
         locations='state_code',
         locationmode='USA-states',
-        color=balance_column,
+        color="Total Balance",
         color_continuous_scale=[
             (0, 'darkred'),
             (0.5, 'white'),
@@ -55,19 +52,28 @@ def create_map(df, balance_column):
         ],
         range_color=[-max_abs_value, max_abs_value],
         scope='usa',
-        labels={balance_column: 'Trade Balance ($)'},
-        hover_data=[
-            'State', 
-            'Canada Exports', 
-            'Canada Imports', 
-            'Mexico Exports', 
-            'Mexico Imports', 
-            balance_column
-        ]
+        labels={
+            "Canada Exports": "Canada Exports(million $)",  
+            "Canada Imports": "Canada Imports(million $)",
+            "Mexico Exports": "Mexico Exports (million $)",
+            "Mexico Imports": "Mexico Imports (million $)",  
+            "Total Balance": "Trade Balance (million $)"
+                },
+
+        #These are the information that will appear 
+        hover_data={
+            "state_code": False,
+            'State': True, 
+            'Canada Exports': True, 
+            'Canada Imports': True, 
+            'Mexico Exports': True, 
+            'Mexico Imports': True, 
+            "Total Balance": True
+        }
     )
     
     fig.update_layout(
-        title='US States Trade Balance with Canada and Mexico',
+        title="US States' Absolute Trade Balance with Canada and Mexico. Hover over each state for granular data (later potentially information on what is causing that). Also adjust the slider to see about projected tarriffs",
         geo=dict(
             showlakes=True,
             lakecolor='rgb(255, 255, 255)',
